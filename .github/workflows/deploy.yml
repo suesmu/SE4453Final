@@ -1,0 +1,31 @@
+name: Build and Deploy Flask App to Azure
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Login to Azure Container Registry
+      run: echo ${{ secrets.AZURE_CONTAINER_REGISTRY }} | awk -F. '{print $1}' | xargs az acr login --name
+
+    - name: Build Docker image
+      run: |
+        docker build -t ${{ secrets.AZURE_CONTAINER_REGISTRY }}/flask-final:v1 .
+
+    - name: Push Docker image
+      run: |
+        docker push ${{ secrets.AZURE_CONTAINER_REGISTRY }}/flask-final:v1
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+        images: ${{ secrets.AZURE_CONTAINER_REGISTRY }}/flask-final:v1
