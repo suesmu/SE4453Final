@@ -1,4 +1,4 @@
-name: Build and Deploy Flask App to Azure
+name: Build and Deploy to Azure
 
 on:
   push:
@@ -10,22 +10,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    - name: Login to Azure Container Registry
-      run: echo ${{ secrets.AZURE_CONTAINER_REGISTRY }} | awk -F. '{print $1}' | xargs az acr login --name
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Build Docker image
-      run: |
-        docker build -t ${{ secrets.AZURE_CONTAINER_REGISTRY }}/flask-final:v1 .
+      - name: Docker Login to ACR
+        run: |
+          docker login finalacr1.azurecr.io \
+            -u ${{ secrets.REGISTRY_USERNAME }} \
+            -p ${{ secrets.REGISTRY_PASSWORD }}
 
-    - name: Push Docker image
-      run: |
-        docker push ${{ secrets.AZURE_CONTAINER_REGISTRY }}/flask-final:v1
+      - name: Build and Push Docker Image
+        run: |
+          docker build . -t finalacr1.azurecr.io/flask-final:${{ github.sha }}
+          docker push finalacr1.azurecr.io/flask-final:${{ github.sha }}
 
-    - name: Deploy to Azure Web App
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
-        images: ${{ secrets.AZURE_CONTAINER_REGISTRY }}/flask-final:v1
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: final-flask   
+          images: finalacr1.azurecr.io/flask-final:${{ github.sha }}
