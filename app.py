@@ -22,7 +22,7 @@ def db_connection():
 
     # Sadece değişkenler dolu mu kontrol ediliyor
     if db_host and db_name and db_user and db_password:
-        return "veritabanına başarıyla bağlanıldı."
+        return "Veritabanına başarıyla bağlanıldı."
     else:
        
         return "veritabanı bilgileri eksik!"
